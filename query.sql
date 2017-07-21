@@ -1,3 +1,26 @@
+CREATE TABLE movies (
+  id INTEGER PRIMARY KEY,
+  name TEXT DEFAULT NULL,
+  year INTEGER DEFAULT NULL,
+  rank REAL DEFAULT NULL
+);
+
+CREATE TABLE actors (
+  id INTEGER PRIMARY KEY,
+  first_name TEXT DEFAULT NULL,
+  last_name TEXT DEFAULT NULL,
+  gender TEXT DEFAULT NULL
+);
+
+CREATE TABLE roles (
+  actor_id INTEGER,
+  movie_id INTEGER,
+  role_name TEXT DEFAULT NULL
+);
+
+CREATE INDEX "actors_idx_first_name" ON "actors" ("first_name");
+CREATE INDEX "actors_idx_last_name" ON "actors" ("last_name");
+
 select *
 from movies
 where year = 1985;
@@ -88,15 +111,26 @@ where year < 1900)
 and year > 2000
 group by 1;
 
-select sub.actor_id
-from (select r1.*
-from roles r1
-inner join roles r2 on r1.movie_id = r2.movie_id
-and r1.actor_id = r2.actor_id
-and r1.role != r2.role) sub
-inner join movies m on m.id = sub.movie_id
-group by 1
-having count(distinct sub.role) >=5
-and m.year > 1990;
+select count(distinct r.role) as num_roles_in_movies,  *
+from actors a
+inner join roles r on r.actor_id = a.id
+inner join movies m on r.movie_id = m.id
+where m.year > 1990
+group by a.id, m.id
+having num_roles_in_movies > 4;
 
+select year, count(*) as femaleOnly
+from movies join
+(
+  select movie_id
+  from actors a join roles r
+  on r.actor_id = a.id and a.gender = 'F'
 
+  except
+
+  select movie_id
+  from actors a join roles r
+  on r.actor_id = a.id and a.gender = 'M'
+) as t
+on t.movie_id = movies.id
+group by year;
